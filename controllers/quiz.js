@@ -157,15 +157,11 @@ exports.check = (req, res, next) => {
 exports.randomplay = (req, res, next) => {
 
     req.session.randomPlay = req.session.randomPlay || [];
+    
     const whereOpt = {'id': {[Sequelize.Op.notIn]: req.session.randomPlay}};
-
+    
     models.quiz.count({where: whereOpt})
     .then(function(count){
-        if(!count){
-            let score = req.session.randomPlay.length;
-            req.session.randomPlay = [];
-            res.render('quizzes/random_none', {score:score});
-        }
         return models.quiz.findAll({
             where: whereOpt,
             offset: Math.floor(Math.random() * count),
@@ -176,7 +172,16 @@ exports.randomplay = (req, res, next) => {
         });
     })
     .then(function(quiz){
-        res.render('quizzes/random_play', {quiz: quiz, score: req.session.randomPlay.lenght});
+        const score = req.session.randomPlay.length;
+
+        if(quiz){
+             res.render('quizzes/random_play', {quiz: quiz, score: req.session.randomPlay.length});
+        }
+        else{
+            req.session.randomPlay = [];
+            res.render('quizzes/random_nomore', {quiz: quiz, score: score});
+        }
+       
     })
     .catch(error => {
         req.flash('error', 'Error playing the Quiz: ' + error.message);
@@ -190,16 +195,15 @@ exports.randomcheck = (req, res, next) => {
 
         const answer = req.query.answer || "";
         const result = answer.toLowerCase().trim() === req.quiz.answer.toLowerCase().trim();
-        let score = req.session.randomPlay.length || 0;
         
         if (result) {
             if (req.session.randomPlay.indexOf(req.quiz.id) === -1) {
                 req.session.randomPlay.push(req.quiz.id);
-                score = req.session.randomPlay.length;
             }
-        } else {
-            req.session.randomPlay = [];
-        }
+        } 
+
+        let score = req.session.randomPlay.length;
+
         res.render('quizzes/random_result', {
             answer,
             result,
