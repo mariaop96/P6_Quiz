@@ -1,3 +1,4 @@
+
 var express = require('express');
 var path = require('path');
 var favicon = require('serve-favicon');
@@ -44,15 +45,6 @@ app.use(methodOverride('_method', {methods: ["POST", "GET"]}));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(partials());
 app.use(flash());
-
-// Dynamic Helper:
-app.use(function(req, res, next) {
-
-    // To use req.session in the views
-    res.locals.session = req.session;
-
-    next();
-});
 
 app.use('/', index);
 
